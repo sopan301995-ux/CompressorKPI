@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 from scipy.optimize import brentq
+from scipy.constants import R as R_GAS
 
 # Thermodynamic libraries
 import thermo
@@ -52,7 +53,7 @@ class UniversalCompressorAnalyzer:
             Z = getattr(st, 'Z_g', None) or getattr(st, 'Z', 1.0)
             H = getattr(st, 'H_g', None) or getattr(st, 'H', 0.0)
             S = getattr(st, 'S_g', None) or getattr(st, 'S', 0.0)
-            v = (Z * thermo.constants.R * st.T) / (st.P * MW)
+            v = (Z * R_GAS * st.T) / (st.P * MW)
             return MW, Z, v, H / MW, S / MW
 
         # 1. Suction State
@@ -98,7 +99,7 @@ class UniversalCompressorAnalyzer:
         f_schultz = (h2_is - h1) / w_is_ideal if abs(w_is_ideal) > 1e-4 else 1.0
 
         Z_avg = 0.5 * (Z1 + Z2_act)
-        H_p = f_schultz * (Z_avg * thermo.constants.R * T1 / MW) * (1.0 / m) * (rp ** m - 1.0) / 1e3
+        H_p = f_schultz * (Z_avg * R_GAS * T1 / MW) * (1.0 / m) * (rp ** m - 1.0) / 1e3
         H_p_meters = (H_p * 1e3) / G_ACCEL
         eta_p = (H_p / dH_act) * 100.0
 
