@@ -37,41 +37,41 @@ class UniversalCompressorAnalyzer:
                 self.ws = [f / total for f in fractions]
                 self.zs = None
 
-def _get_state(self, T: float, P: float):
-        """Creates a thermo state instance at (T, P) with auto-selected EOS."""
-        if self.fluid_type == "Pure":
-            state = Chemical(self.chem_name, T=T, P=P)
-        else:
-            if self.zs is not None:
-                state = Mixture(self.components, zs=self.zs, T=T, P=P)
+    def _get_state(self, T: float, P: float):
+            """Creates a thermo state instance at (T, P) with auto-selected EOS."""
+            if self.fluid_type == "Pure":
+                state = Chemical(self.chem_name, T=T, P=P)
             else:
-                state = Mixture(self.components, ws=self.ws, T=T, P=P)
-        return state
+                if self.zs is not None:
+                    state = Mixture(self.components, zs=self.zs, T=T, P=P)
+                else:
+                    state = Mixture(self.components, ws=self.ws, T=T, P=P)
+            return state
 
-def solve(self, P1: float, T1: float, P2: float, T2_act: float, mass_flow: float):
-        """
-        Executes isentropic flash and ASME PTC 10 analysis.
-        All inputs in SI units (Pa, K, kg/s).
-        """
-        # Helper lambda to safely extract properties regardless of Pure/Mixture object differences
-        def extract_props(st):
-            MW = st.MW * 1e-3  # kg/mol
-            Z = getattr(st, 'Z_g', None)
-            if Z is None:
-                Z = getattr(st, 'Z', 1.0)
-                
-            H = getattr(st, 'H_g', None)
-            if H is None:
-                H = getattr(st, 'H', 0.0)
-                
-            S = getattr(st, 'S_g', None)
-            if S is None:
-                S = getattr(st, 'S', 0.0)
-                
-            v = (Z * thermo.constants.R * st.T) / (st.P * MW)
-            h = H / MW  # J/kg
-            s = S / MW  # J/(kg*K)
-            return MW, Z, v, h, s
+    def solve(self, P1: float, T1: float, P2: float, T2_act: float, mass_flow: float):
+            """
+            Executes isentropic flash and ASME PTC 10 analysis.
+            All inputs in SI units (Pa, K, kg/s).
+            """
+            # Helper lambda to safely extract properties regardless of Pure/Mixture object differences
+            def extract_props(st):
+                MW = st.MW * 1e-3  # kg/mol
+                Z = getattr(st, 'Z_g', None)
+                if Z is None:
+                    Z = getattr(st, 'Z', 1.0)
+                    
+                H = getattr(st, 'H_g', None)
+                if H is None:
+                    H = getattr(st, 'H', 0.0)
+                    
+                S = getattr(st, 'S_g', None)
+                if S is None:
+                    S = getattr(st, 'S', 0.0)
+                    
+                v = (Z * thermo.constants.R * st.T) / (st.P * MW)
+                h = H / MW  # J/kg
+                s = S / MW  # J/(kg*K)
+                return MW, Z, v, h, s
 
         # 1. Suction State
         st1 = self._get_state(T=T1, P=P1)
