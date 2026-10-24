@@ -48,7 +48,7 @@ def _get_state(self, T: float, P: float):
                 state = Mixture(self.components, ws=self.ws, T=T, P=P)
         return state
 
-    def solve(self, P1: float, T1: float, P2: float, T2_act: float, mass_flow: float):
+def solve(self, P1: float, T1: float, P2: float, T2_act: float, mass_flow: float):
         """
         Executes isentropic flash and ASME PTC 10 analysis.
         All inputs in SI units (Pa, K, kg/s).
