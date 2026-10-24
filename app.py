@@ -139,7 +139,7 @@ with st.sidebar:
         presets_data = {
             "Sales Gas (Pipeline)": (["Methane", "Ethane", "Propane", "n-Butane", "Nitrogen", "Carbon Dioxide"], [0.94, 0.035, 0.010, 0.005, 0.005, 0.005]),
             "Wet Gas / Untreated": (["Methane", "Ethane", "Propane", "Isobutane", "n-Butane", "Carbon Dioxide"], [0.82, 0.09, 0.045, 0.015, 0.015, 0.015]),
-            "Ethylene Cracker Gas": (["Ethylene", "Ethane", "Methane", "Propylene", "Hydrogen"], [0.45, 0.20, 0.20, 0.10, 0.05]),
+            "Ethylene Cracker Gas": (["Ethene", "Ethane", "Methane", "Propene", "Hydrogen"], [0.45, 0.20, 0.20, 0.10, 0.05]),
             "Pure Carbon Dioxide": (["Carbon Dioxide"], [1.0]),
             "Pure Hydrogen": (["Hydrogen"], [1.0])
         }
