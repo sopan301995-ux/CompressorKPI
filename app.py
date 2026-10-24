@@ -37,7 +37,7 @@ class UniversalCompressorAnalyzer:
                 self.ws = [f / total for f in fractions]
                 self.zs = None
 
-    def _get_state(self, T: float, P: float):
+def _get_state(self, T: float, P: float):
         """Creates a thermo state instance at (T, P) with auto-selected EOS."""
         if self.fluid_type == "Pure":
             state = Chemical(self.chem_name, T=T, P=P)
@@ -53,21 +53,53 @@ class UniversalCompressorAnalyzer:
         Executes isentropic flash and ASME PTC 10 analysis.
         All inputs in SI units (Pa, K, kg/s).
         """
+        # Helper lambda to safely extract properties regardless of Pure/Mixture object differences
+        def extract_props(st):
+            MW = st.MW * 1e-3  # kg/mol
+            Z = getattr(st, 'Z_g', None)
+            if Z is None:
+                Z = getattr(st, 'Z', 1.0)
+                
+            H = getattr(st, 'H_g', None)
+            if H is None:
+                H = getattr(st, 'H', 0.0)
+                
+            S = getattr(st, 'S_g', None)
+            if S is None:
+                S = getattr(st, 'S', 0.0)
+                
+            v = (Z * thermo.constants.R * st.T) / (st.P * MW)
+            h = H / MW  # J/kg
+            s = S / MW  # J/(kg*K)
+            return MW, Z, v, h, s
+
         # 1. Suction State
         st1 = self._get_state(T=T1, P=P1)
-        MW = st1.MW * 1e-3  # kg/mol
-        Z1 = st1.Z_g if st1.Z_g is not None else st1.Z
-        v1 = (Z1 * thermo.constants.R * T1) / (P1 * MW)  # m^3/kg
-        h1 = st1.H_g / MW if st1.H_g is not None else st1.H / MW  # J/kg
-        s1 = st1.S_g / MW if st1.S_g is not None else st1.S / MW  # J/(kg*K)
+        MW, Z1, v1, h1, s1 = extract_props(st1)
 
         # 2. Actual Discharge State
         st2_act = self._get_state(T=T2_act, P=P2)
-        Z2_act = st2_act.Z_g if st2_act.Z_g is not None else st2_act.Z
-        v2_act = (Z2_act * thermo.constants.R * T2_act) / (P2 * MW)  # m^3/kg
-        h2_act = st2_act.H_g / MW if st2_act.H_g is not None else st2_act.H / MW  # J/kg
-        s2_act = st2_act.S_g / MW if st2_act.S_g is not None else st2_act.S / MW  # J/(kg*K)
+        _, Z2_act, v2_act, h2_act, s2_act = extract_props(st2_act)
 
+        # 3. Isentropic Flash (s(T2_is, P2) = s1)
+        def entropy_residual(T_guess):
+            st_guess = self._get_state(T=T_guess, P=P2)
+            _, _, _, _, s_guess = extract_props(st_guess)
+            return s_guess - s1
+
+        # Search interval: from T1 up to theoretical upper bound
+        rp = P2 / P1
+        T_lower = max(T1, 150.0)
+        T_upper = T1 * (rp**0.45) + 200.0
+
+        try:
+            T2_is = brentq(entropy_residual, a=T_lower, b=T_upper, xtol=1e-4)
+        except ValueError:
+            # Fallback if bounds are slightly tight
+            T2_is = brentq(entropy_residual, a=T1 * 0.9, b=T_upper * 1.5, xtol=1e-3)
+
+        st2_is = self._get_state(T=T2_is, P=P2)
+        _, Z2_is, v2_is, h2_is, _ = extract_props(st2_is)
         # 3. Isentropic Flash (s(T2_is, P2) = s1)
         def entropy_residual(T_guess):
             st_guess = self._get_state(T=T_guess, P=P2)
